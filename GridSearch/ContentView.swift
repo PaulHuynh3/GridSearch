@@ -9,13 +9,27 @@ import SwiftUI
 
 struct ContentView: View {
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundColor(.accentColor)
-            Text("Hello, world!")
+        NavigationView {
+            ScrollView {
+                LazyVGrid(columns: [
+                    GridItem(.fixed(100)),
+                    GridItem(.fixed(100)),
+                    GridItem(.fixed(100))
+                ], content: {
+                    ForEach(0...20, id: \.self) { num in
+                        HStack {
+                            Spacer()
+                            Text("\(num)")
+                            Spacer()
+                        }
+                        .padding()
+                        .background(Color.red)
+                    }
+ 
+
+                })
+            }.navigationTitle("Grid Search")
         }
-        .padding()
     }
 }
 
