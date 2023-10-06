@@ -6,34 +6,25 @@
 //
 
 import SwiftUI
+import Kingfisher
 
 struct ContentView: View {
     
+    //Need this objeserved object when using ViewModels for SwiftUI
     @ObservedObject var viewModel = GridViewModel()
     
     var body: some View {
         NavigationView {
             ScrollView {
                 LazyVGrid(columns: [
-                    GridItem(.flexible(minimum: 125, maximum: 200), spacing: 12, alignment: .top),
-                    GridItem(.flexible(minimum: 125, maximum: 200), spacing: 12, alignment: .top),
-                    GridItem(.flexible(minimum: 125, maximum: 200), alignment: .top)
+                    GridItem(.flexible(minimum: 50, maximum: 200), spacing: 16, alignment: .top),
+                    GridItem(.flexible(minimum: 50, maximum: 200), spacing: 16, alignment: .top),
+                    GridItem(.flexible(minimum: 50, maximum: 200), spacing: 16, alignment: .top)
                     
-                ], spacing: 12, content: {
+                ], alignment: .leading, spacing: 16, content: {
                     ForEach(viewModel.results, id: \.self) { res in
-                        VStack(alignment: .leading) {
-                            Spacer()
-                                .frame(width: 100, height: 100)
-                                .background(Color.blue)
-                            
-                            Text(res.name)
-                                .font(.system(size: 10, weight: .semibold))
-                            Text(res.releaseDate)
-                                .font(.system(size: 9, weight: .regular))
-                            Text(res.artistName)
-                                .font(.system(size: 9, weight: .regular))
-                        }
-                        .padding(.horizontal)
+                        AppInfo(res: res)
+                        
                     }
                 }).padding(.horizontal, 12)
             }.navigationTitle("Grid Search")
@@ -42,12 +33,35 @@ struct ContentView: View {
 }
 
 
+struct AppInfo: View {
+    var res: Result
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            KFImage(URL(string: res.artworkUrl100))
+                .resizable()
+                .scaledToFit()
+                .cornerRadius(22)
+            
+            Text(res.name)
+                .font(.system(size: 10, weight: .semibold))
+                .padding(.top, 4)
+            Text(res.releaseDate)
+                .font(.system(size: 9, weight: .regular))
+            Text(res.artistName)
+                .font(.system(size: 9, weight: .regular))
+        }
+    }
+}
+
 class GridViewModel: ObservableObject {
-    @Published var items = 0..<10
+
+    // Note - We need this published because when it gets set
+    // it will tell the views to redraw itself else users wont see the update.
     @Published var results = [Result]()
     
     init() {
-        
+        //Best place to call a service call is INIT()
         URLSession.shared.dataTask(with: URL(string: "https://rss.applemarketingtools.com/api/v2/us/apps/top-free/50/apps.json")!) { (data, res, err) in
             
             guard let data = data else { return }
