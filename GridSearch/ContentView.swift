@@ -5,41 +5,6 @@
 //  Created by Paul Huynh on 2023-10-05.
 //
 
-/*
- 
- {
- "feed": {
- "title": "Top Free Apps",
- "id": "https://rss.applemarketingtools.com/api/v2/us/apps/top-free/50/apps.json",
- "author": {
- "name": "Apple",
- "url": "https://www.apple.com/"
- },
- "links": [
- {
- "self": "https://rss.applemarketingtools.com/api/v2/us/apps/top-free/50/apps.json"
- }
- ],
- "copyright": "Copyright © 2023 Apple Inc. All rights reserved.",
- "country": "us",
- "icon": "https://www.apple.com/favicon.ico",
- "updated": "Thu, 5 Oct 2023 19:57:28 +0000",
- "results": [
- {
- "artistName": "SNOW Corporation",
- "id": "1577705074",
- "name": "EPIK - AI Photo Editor",
- "releaseDate": "2021-08-14",
- "kind": "apps",
- "artworkUrl100": "https://is1-ssl.mzstatic.com/image/thumb/Purple116/v4/d9/28/62/d9286279-2a4a-dd7c-a7e7-daefbdc0b249/AppIcon-0-1x_U007emarketing-0-7-0-85-220.png/100x100bb.png",
- "genres": [],
- "url": "https://apps.apple.com/us/app/epik-ai-photo-editor/id1577705074"
- },
- 
- */
-
-
-// https://rss.applemarketingtools.com/api/v2/us/apps/top-free/50/apps.json
 import SwiftUI
 
 struct ContentView: View {
@@ -50,28 +15,26 @@ struct ContentView: View {
         NavigationView {
             ScrollView {
                 LazyVGrid(columns: [
-                    GridItem(.flexible(minimum: 100, maximum: 200),spacing: 12),
-                    GridItem(.flexible(minimum: 100, maximum: 200), spacing: 12),
-                    GridItem(.flexible(minimum: 100, maximum: 200))
+                    GridItem(.flexible(minimum: 125, maximum: 200), spacing: 12, alignment: .top),
+                    GridItem(.flexible(minimum: 125, maximum: 200), spacing: 12, alignment: .top),
+                    GridItem(.flexible(minimum: 125, maximum: 200), alignment: .top)
                     
                 ], spacing: 12, content: {
-                    ForEach(viewModel.items, id: \.self) { num in
+                    ForEach(viewModel.results, id: \.self) { res in
                         VStack(alignment: .leading) {
                             Spacer()
                                 .frame(width: 100, height: 100)
                                 .background(Color.blue)
                             
-                            Text("App title")
+                            Text(res.name)
                                 .font(.system(size: 10, weight: .semibold))
-                            Text("Release Date")
+                            Text(res.releaseDate)
                                 .font(.system(size: 9, weight: .regular))
-                            Text("Copyright")
+                            Text(res.artistName)
                                 .font(.system(size: 9, weight: .regular))
                         }
-                        .padding()
-                        .background(Color.red)
+                        .padding(.horizontal)
                     }
- 
                 }).padding(.horizontal, 12)
             }.navigationTitle("Grid Search")
         }
@@ -80,11 +43,22 @@ struct ContentView: View {
 
 
 class GridViewModel: ObservableObject {
-//    var feed: Feed
-    
     @Published var items = 0..<10
+    @Published var results = [Result]()
     
     init() {
+        
+        URLSession.shared.dataTask(with: URL(string: "https://rss.applemarketingtools.com/api/v2/us/apps/top-free/50/apps.json")!) { (data, res, err) in
+            
+            guard let data = data else { return }
+            
+            do {
+                let rss = try JSONDecoder().decode(RSS.self, from: data)
+                self.results = rss.feed.results
+            } catch {
+                print("Failed to decode")
+            }
+        }.resume()
         
     }
 }
@@ -99,14 +73,13 @@ struct Feed: Decodable {
     let results: [Result]
 }
 
-struct Result: Decodable {
+struct Result: Decodable, Hashable {
     let artistName: String
     let id: String
     let name: String
-    let rleaseDate: String
+    let releaseDate: String
     let kind: String
     let artworkUrl100: String
-    let genres: String
     let url: String
 }
 
