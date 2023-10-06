@@ -62,18 +62,21 @@ class GridViewModel: ObservableObject {
     
     init() {
         //Best place to call a service call is INIT()
-        URLSession.shared.dataTask(with: URL(string: "https://rss.applemarketingtools.com/api/v2/us/apps/top-free/50/apps.json")!) { (data, res, err) in
+        Task {
+            await fetchData()
+        }
+    }
+    
+    func fetchData() async {
+        do {
+            let (data, _) = try await URLSession.shared.data(from:URL(string: "https://rss.applemarketingtools.com/api/v2/us/apps/top-free/50/apps.json")!)
             
-            guard let data = data else { return }
+            let rss = try JSONDecoder().decode(RSS.self, from: data)
+            self.results = rss.feed.results
             
-            do {
-                let rss = try JSONDecoder().decode(RSS.self, from: data)
-                self.results = rss.feed.results
-            } catch {
-                print("Failed to decode")
-            }
-        }.resume()
-        
+        } catch {
+            print("failred to reach endpoint \(error)")
+        }
     }
 }
 
